@@ -51,7 +51,32 @@ def signup():
     except Exception as e:
         return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
     
+    
+# login user
+@app.route('/login', methods=['POST'])
+def login():
+    # Extract data from the request
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
 
+    # Check if both username and password are provided
+    if not username or not password:
+        return Response(json.dumps({'error': "Please fill up all fields"}), mimetype="application/json", status=400)
+    
+    # Check if the user exists in the database and validate the password
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+    user = cursor.fetchone()
+    cursor.close()
+
+    if user:
+        # Set session variables to indicate the user is logged in
+        session['loggedIn'] = True
+        session['username'] = user['username']
+        return Response(json.dumps({'message': 'Login successful'}), mimetype="application/json", status=201)
+    else:
+        return Response(json.dumps({'message': 'Invalid username or password'}), mimetype="application/json", status=401)
 
 
 # Add Product to Database
