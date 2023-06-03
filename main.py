@@ -50,5 +50,24 @@ def addProduct():
         return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
 
 
+# Get All Products from Database
+@app.route("/products", methods=['GET'])
+def products():
+    try:
+        # Fetch all products from the database
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM products")
+        products = cursor.fetchall()
+        cursor.close()
+        
+        # Check if there are no products available
+        if not products:
+            Response(json.dumps({"error": "No products available"}), mimetype="application/json", status=404)
+        
+        return Response(json.dumps(products), mimetype="application/json", status=200)
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
