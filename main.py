@@ -90,5 +90,20 @@ def updateProduct(product_id):
         return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
 
 
+# Delete a Product
+@app.route('/product/<int:product_id>', methods=['DELETE'])
+def deleteProduct(product_id):
+    try:
+        # Delete the product from the database
+        cursor = mysql.connection.cursor()
+        cursor.execute("DELETE FROM products WHERE id = %s", (product_id, ))
+        mysql.connection.commit()
+        cursor.close()
+        
+        return Response(json.dumps({'message': 'Product deleted successfully'}), mimetype="application/json", status=200)
+    
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+
 if __name__ == '__main__':
     app.run(debug=True)
