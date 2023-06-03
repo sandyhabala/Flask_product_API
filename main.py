@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, session
+import json
+from flask import Flask, request, session, Response
 from dotenv import load_dotenv
 from flask_mysqldb import MySQL
 
@@ -18,6 +19,35 @@ app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
 # Initialize MySQL
 mysql = MySQL(app)
+
+# Add Product to Database
+@app.route("/addProduct", methods=['POST'])
+def addProduct():
+    try:
+        # Extract data from the request
+        data = request.get_json()
+        if not data or 'name' not in data or 'price' not in data or 'description' not in data or 'category' not in data:
+            return Response(json.dumps({'error': 'Invalid request data'}), mimetype="application/json", status=400)
+
+        # Check if all required fields are provided
+        name = data['name']
+        price = data['price']
+        description = data['description']
+        category = data['category']
+
+        if not name or not price or not description or not category:
+            return Response(json.dumps({'error': 'Please fill up all fields'}), mimetype="application/json", status=400)
+
+        # Insert the new product into the database
+        cursor = mysql.connection.cursor()
+        cursor.execute("INSERT INTO products (name, price, description, category) VALUES (%s, %s,%s, %s)", 
+                        (name, price, description, category))
+        cursor.connection.commit()
+        cursor.close()
+
+        return Response(json.dumps({'message': 'Product created successfully'}), mimetype="application/json", status=201)
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
 
 
 if __name__ == '__main__':
