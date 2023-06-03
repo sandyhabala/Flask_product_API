@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import timedelta
 from flask import Flask, request, session, Response
 from dotenv import load_dotenv
 from flask_mysqldb import MySQL
@@ -16,6 +17,10 @@ app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
+app.permanent_session_lifetime = timedelta(minutes=10)
+
+# secret key for session
+app.secret_key = "secretkey"
 
 # Initialize MySQL
 mysql = MySQL(app)
@@ -83,6 +88,11 @@ def login():
 @app.route("/addProduct", methods=['POST'])
 def addProduct():
     try:
+        
+         # Check if the user is logged in
+        if 'loggedIn' not in session or not session['loggedIn']:
+            return Response(json.dumps({'error': 'Unauthorized'}), mimetype="application/json", status=401)
+        
         # Extract data from the request
         data = request.get_json()
         if not data or 'name' not in data or 'price' not in data or 'description' not in data or 'category' not in data:
@@ -131,6 +141,11 @@ def products():
 @app.route('/product/<int:product_id>', methods=['PUT'])
 def updateProduct(product_id):
     try:
+        
+         # Check if the user is logged in
+        if 'loggedIn' not in session or not session['loggedIn']:
+            return Response(json.dumps({'error': 'Unauthorized'}), mimetype="application/json", status=401)
+        
         # Extract data from the request
         name = request.json['name']
         price = request.json['price']
@@ -153,6 +168,11 @@ def updateProduct(product_id):
 @app.route('/product/<int:product_id>', methods=['DELETE'])
 def deleteProduct(product_id):
     try:
+        
+         # Check if the user is logged in
+        if 'loggedIn' not in session or not session['loggedIn']:
+            return Response(json.dumps({'error': 'Unauthorized'}), mimetype="application/json", status=401)
+        
         # Delete the product from the database
         cursor = mysql.connection.cursor()
         cursor.execute("DELETE FROM products WHERE id = %s", (product_id, ))
