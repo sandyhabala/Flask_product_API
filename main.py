@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask import Flask, request, session, Response
 from dotenv import load_dotenv
 from flask_mysqldb import MySQL
@@ -136,6 +136,25 @@ def products():
         return Response(json.dumps(products), mimetype="application/json", status=200)
     except Exception as e:
         return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+
+# Search Product from Database base in category
+@app.route("/product", methods=['GET'])
+def searchProduct():
+    try:
+        # Extract the query parameter from the request
+        query = request.args.get('q')
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM products WHERE category = %s", (query, ))
+        products = cursor.fetchall()
+        cursor.close()
+
+        if not products:
+            return Response(json.dumps({"error": "Products not found"}), mimetype="application/json", status=404)
+
+        return Response(json.dumps(products), mimetype="application/json", status=200)
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+
 
 # Update a Product
 @app.route('/product/<int:product_id>', methods=['PUT'])
