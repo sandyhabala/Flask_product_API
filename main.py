@@ -68,6 +68,27 @@ def products():
     except Exception as e:
         return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
 
+# Update a Product
+@app.route('/product/<int:product_id>', methods=['PUT'])
+def updateProduct(product_id):
+    try:
+        # Extract data from the request
+        name = request.json['name']
+        price = request.json['price']
+        description = request.json['description']
+        category = request.json['category']
+            
+        # Update the product in the database
+        cursor = mysql.connection.cursor()
+        cursor.execute("UPDATE products SET name = %s, price=%s, description = %s, category = %s WHERE id = %s",
+                            (name, price, description, category, product_id))
+        mysql.connection.commit()
+        cursor.close()
+        return Response(json.dumps({'message': 'Product updated successfully'}), mimetype="application/json", status=200)
+        
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
