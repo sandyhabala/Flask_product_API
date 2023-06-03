@@ -20,6 +20,40 @@ app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 # Initialize MySQL
 mysql = MySQL(app)
 
+
+# register user
+@app.route("/signup", methods=['POST'])
+def signup():
+    try:
+        # Extract data from the request
+        data = request.get_json()
+        username = data['username']
+        password = data['password']
+        
+        # Check if both username and password are provided
+        if not username or not password:
+            return Response(json.dumps({'error': "Please fill up all fields"}), mimetype="application/json", status=400)
+
+        # Check if the user already exists in the database
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username, ))
+        foundUser = cursor.fetchone()
+        
+        if foundUser:
+            return Response(json.dumps({'error': "User already exists"}), mimetype="application/json", status=409)
+        
+        # Insert the new user into the database
+        cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+        cursor.connection.commit()
+        cursor.close()
+
+        return Response(json.dumps({'message': 'User created successfully'}), mimetype="application/json", status=201)
+    except Exception as e:
+        return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+    
+
+
+
 # Add Product to Database
 @app.route("/addProduct", methods=['POST'])
 def addProduct():
@@ -104,6 +138,7 @@ def deleteProduct(product_id):
     
     except Exception as e:
         return Response(json.dumps({'error': str(e)}), mimetype="application/json", status=400)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
